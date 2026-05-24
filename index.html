@@ -1038,6 +1038,7 @@
   </div>
 
   <script>
+    const APPS_SCRIPT_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxNwgV32Af4QRLXStQT_RPDt99bEzMyABRHAJM_gxRs_iYYOezxV1BNiMeYLTQ8N05qTQ/exec";
     const PROJECT_DASHBOARD_CONTEXT = {
       reg: "<?= reg ?>",
       email: "<?= email ?>",
@@ -1114,89 +1115,43 @@
     }
 
     function verifyAndOpenProjectWorkForm() {
-      const reg = document.getElementById("projectRegNo").value.trim();
-      const email = document.getElementById("projectEmailId").value.trim();
-      const button = document.getElementById("verifyProjectButton");
+  const reg = document.getElementById("projectRegNo").value.trim();
+  const email = document.getElementById("projectEmailId").value.trim();
 
-      if (!/^\d{12}$/.test(reg)) {
-        showProjectModalMessage("Please enter a valid 12 digit Registration No.", "warning");
-        return;
-      }
+  if (!/^\d{12}$/.test(reg)) {
+    showProjectModalMessage("Please enter a valid 12 digit Registration No.", "warning");
+    return;
+  }
 
-      if (!/^\S+@\S+\.\S+$/.test(email)) {
-        showProjectModalMessage("Please enter a valid Email ID.", "warning");
-        return;
-      }
+  if (!/^\S+@\S+\.\S+$/.test(email)) {
+    showProjectModalMessage("Please enter a valid Email ID.", "warning");
+    return;
+  }
 
-      if (typeof google === "undefined" || !google.script || !google.script.run) {
-        showProjectModalMessage("Please open this dashboard through the deployed Apps Script web app link.", "error");
-        return;
-      }
+  const targetUrl =
+    APPS_SCRIPT_WEB_APP_URL +
+    "?page=projectWork&reg=" +
+    encodeURIComponent(reg) +
+    "&email=" +
+    encodeURIComponent(email);
 
-      button.disabled = true;
-      button.textContent = "Checking...";
-      showProjectModalMessage("Checking Phase 1 and Phase 2 completion. Please wait.", "info");
-
-      google.script.run
-        .withSuccessHandler(function(response) {
-          button.disabled = false;
-          button.textContent = "Verify and Open Form";
-
-          if (response && response.status === "success" && response.eligible === true) {
-            const formUrl =
-              getBaseUrl() +
-              "?page=projectWork&reg=" +
-              encodeURIComponent(reg) +
-              "&email=" +
-              encodeURIComponent(email);
-
-            showProjectModalMessage(
-              response.message + " Opening Project Work form...",
-              "info"
-            );
-
-            setTimeout(function() {
-              window.top.location.href = formUrl;
-            }, 700);
-
-            return;
-          }
-
-          const message = response && response.message
-            ? response.message
-            : "Eligibility could not be verified. Please try again.";
-
-          showProjectModalMessage(message, "warning");
-        })
-        .withFailureHandler(function(error) {
-          button.disabled = false;
-          button.textContent = "Verify and Open Form";
-
-          const message = error && error.message
-            ? error.message
-            : "Eligibility checking failed. Please try again.";
-
-          showProjectModalMessage(message, "error");
-        })
-        .checkPhase3Eligibility(reg, email);
-    }
-
+  window.location.href = targetUrl;
+}
     function openStudentProjectStatusReport() {
-      window.top.location.href = getBaseUrl() + "?page=studentProjectWorkStatusReport";
-    }
+  window.location.href = APPS_SCRIPT_WEB_APP_URL + "?page=studentProjectWorkStatusReport";
+}
 
-    function openTopicWiseProjectAnalysis() {
-      window.top.location.href = getBaseUrl() + "?page=topicWiseProjectAnalysis";
-    }
+function openTopicWiseProjectAnalysis() {
+  window.location.href = APPS_SCRIPT_WEB_APP_URL + "?page=topicWiseProjectAnalysis";
+}
 
-    function openProjectGroupwiseStatusReport() {
-      window.top.location.href = getBaseUrl() + "?page=groupwiseProjectWorkStatusReport";
-    }
+function openProjectGroupwiseStatusReport() {
+  window.location.href = APPS_SCRIPT_WEB_APP_URL + "?page=groupwiseProjectWorkStatusReport";
+}
 
-    function openProjectMentorwiseStatusReport() {
-      window.top.location.href = getBaseUrl() + "?page=mentorwiseProjectWorkStatusReport";
-    }
-
+function openProjectMentorwiseStatusReport() {
+  window.location.href = APPS_SCRIPT_WEB_APP_URL + "?page=mentorwiseProjectWorkStatusReport";
+}
     document.addEventListener("keydown", function(event) {
       if (event.key === "Escape") {
         closeProjectFormVerificationModal();
