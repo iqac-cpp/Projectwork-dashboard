@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <base target="_top">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <!-- GITHUB DASHBOARD VERSION: redirects to Apps Script; no google.script.run -->
   <title>Project Work Dashboard 2026 | GDC Cheepurupalli</title>
 
   <style>
@@ -1039,18 +1039,36 @@
 
   <script>
     const APPS_SCRIPT_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxNwgV32Af4QRLXStQT_RPDt99bEzMyABRHAJM_gxRs_iYYOezxV1BNiMeYLTQ8N05qTQ/exec";
+
     const PROJECT_DASHBOARD_CONTEXT = {
-      reg: "<?= reg ?>",
-      email: "<?= email ?>",
-      studentName: "<?= studentName ?>",
-      phase1Completed: "<?= phase1Completed ?>",
-      phase2Completed: "<?= phase2Completed ?>",
-      eligibilityMessage: "<?= eligibilityMessage ?>",
-      projectStatus: "<?= projectStatus ?>"
+      reg: "",
+      email: "",
+      studentName: "",
+      phase1Completed: "",
+      phase2Completed: "",
+      eligibilityMessage: "",
+      projectStatus: ""
     };
 
-    function getBaseUrl() {
-      return "<?= serviceUrl ?>";
+    function getBaseUrl() { return APPS_SCRIPT_WEB_APP_URL; }
+
+    function isAppsScriptUrlConfigured() {
+      return (
+        APPS_SCRIPT_WEB_APP_URL &&
+        /^https:\/\/script\.google\.com\/macros\/s\/.+\/exec$/.test(APPS_SCRIPT_WEB_APP_URL)
+      );
+    }
+
+    function buildAppsScriptUrl(pageName, params) {
+      const url = new URL(APPS_SCRIPT_WEB_APP_URL);
+      url.searchParams.set("page", pageName);
+      Object.keys(params || {}).forEach(function(key) {
+        const value = params[key];
+        if (value !== undefined && value !== null && String(value).trim() !== "") {
+          url.searchParams.set(key, String(value).trim());
+        }
+      });
+      return url.toString();
     }
 
     document.addEventListener("DOMContentLoaded", function() {
@@ -1062,7 +1080,6 @@
       if (PROJECT_DASHBOARD_CONTEXT.reg && PROJECT_DASHBOARD_CONTEXT.email) {
         document.getElementById("dashboardUserName").textContent =
           PROJECT_DASHBOARD_CONTEXT.studentName || "Project Work Services";
-
         document.getElementById("dashboardInfoText").innerHTML =
           "Registration No: <strong>" + escapeHtml(PROJECT_DASHBOARD_CONTEXT.reg) + "</strong><br>" +
           "Email ID: <strong>" + escapeHtml(PROJECT_DASHBOARD_CONTEXT.email) + "</strong><br>" +
@@ -1087,21 +1104,16 @@
       document.body.classList.add("modal-open");
       document.getElementById("projectModalMessage").className = "modal-message";
       document.getElementById("projectModalMessage").textContent = "";
-      document.getElementById("projectRegNo").value = PROJECT_DASHBOARD_CONTEXT.reg || "";
-      document.getElementById("projectEmailId").value = PROJECT_DASHBOARD_CONTEXT.email || "";
+      document.getElementById("projectRegNo").value = "";
+      document.getElementById("projectEmailId").value = "";
       document.getElementById("projectEligibilityModal").classList.add("active");
-
-      setTimeout(function() {
-        document.getElementById("projectRegNo").focus();
-      }, 80);
+      setTimeout(function() { document.getElementById("projectRegNo").focus(); }, 80);
     }
 
     function closeProjectFormVerificationModal() {
       document.body.classList.remove("modal-open");
       document.getElementById("projectEligibilityModal").classList.remove("active");
-
       const button = document.getElementById("verifyProjectButton");
-
       if (button) {
         button.disabled = false;
         button.textContent = "Verify and Open Form";
@@ -1109,53 +1121,49 @@
     }
 
     function closeProjectModalOutside(event) {
-      if (event.target.id === "projectEligibilityModal") {
-        closeProjectFormVerificationModal();
-      }
+      if (event.target.id === "projectEligibilityModal") closeProjectFormVerificationModal();
     }
 
     function verifyAndOpenProjectWorkForm() {
-  const reg = document.getElementById("projectRegNo").value.trim();
-  const email = document.getElementById("projectEmailId").value.trim();
+      const reg = document.getElementById("projectRegNo").value.trim();
+      const email = document.getElementById("projectEmailId").value.trim();
+      const button = document.getElementById("verifyProjectButton");
 
-  if (!/^\d{12}$/.test(reg)) {
-    showProjectModalMessage("Please enter a valid 12 digit Registration No.", "warning");
-    return;
-  }
-
-  if (!/^\S+@\S+\.\S+$/.test(email)) {
-    showProjectModalMessage("Please enter a valid Email ID.", "warning");
-    return;
-  }
-
-  const targetUrl =
-    APPS_SCRIPT_WEB_APP_URL +
-    "?page=projectWork&reg=" +
-    encodeURIComponent(reg) +
-    "&email=" +
-    encodeURIComponent(email);
-
-  window.location.href = targetUrl;
-}
-    function openStudentProjectStatusReport() {
-  window.location.href = APPS_SCRIPT_WEB_APP_URL + "?page=studentProjectWorkStatusReport";
-}
-
-function openTopicWiseProjectAnalysis() {
-  window.location.href = APPS_SCRIPT_WEB_APP_URL + "?page=topicWiseProjectAnalysis";
-}
-
-function openProjectGroupwiseStatusReport() {
-  window.location.href = APPS_SCRIPT_WEB_APP_URL + "?page=groupwiseProjectWorkStatusReport";
-}
-
-function openProjectMentorwiseStatusReport() {
-  window.location.href = APPS_SCRIPT_WEB_APP_URL + "?page=mentorwiseProjectWorkStatusReport";
-}
-    document.addEventListener("keydown", function(event) {
-      if (event.key === "Escape") {
-        closeProjectFormVerificationModal();
+      if (!/^\d{12}$/.test(reg)) {
+        showProjectModalMessage("Please enter a valid 12 digit Registration No.", "warning");
+        return;
       }
+      if (!/^\S+@\S+\.\S+$/.test(email)) {
+        showProjectModalMessage("Please enter a valid Email ID.", "warning");
+        return;
+      }
+      if (!isAppsScriptUrlConfigured()) {
+        showProjectModalMessage("Apps Script Web App URL is not configured correctly.", "error");
+        return;
+      }
+
+      button.disabled = true;
+      button.textContent = "Opening...";
+      showProjectModalMessage("Opening secure Apps Script eligibility check. Please wait.", "info");
+      const targetUrl = buildAppsScriptUrl("projectWork", { reg: reg, email: email });
+      setTimeout(function() { window.location.assign(targetUrl); }, 450);
+    }
+
+    function openStudentProjectStatusReport() {
+      window.location.assign(buildAppsScriptUrl("studentProjectWorkStatusReport"));
+    }
+    function openTopicWiseProjectAnalysis() {
+      window.location.assign(buildAppsScriptUrl("topicWiseProjectAnalysis"));
+    }
+    function openProjectGroupwiseStatusReport() {
+      window.location.assign(buildAppsScriptUrl("groupwiseProjectWorkStatusReport"));
+    }
+    function openProjectMentorwiseStatusReport() {
+      window.location.assign(buildAppsScriptUrl("mentorwiseProjectWorkStatusReport"));
+    }
+
+    document.addEventListener("keydown", function(event) {
+      if (event.key === "Escape") closeProjectFormVerificationModal();
     });
 
     function escapeHtml(value) {
