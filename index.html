@@ -987,7 +987,7 @@
       <div>
         <h3>Dashboard Quick Access</h3>
         <p>
-          Select the required Phase 3 service. The Project Work form verifies Phase 1 and Phase 2 completion before opening. During testing, the Programme Book request sends a test copy only to IQAC.
+          Select the required Phase 3 service. The Project Work form verifies Phase 1 and Phase 2 completion before opening. The Programme Book request sends the generated PDF to the verified registered student email.
         </p>
       </div>
 
@@ -1027,12 +1027,12 @@
       <article class="dashboard-card card-purple">
         <div class="card-top">
           <span class="icon-box" aria-hidden="true"><svg><use href="#icon-file"></use></svg></span>
-          <span class="badge">Test</span>
+          <span class="badge">Student Copy</span>
         </div>
         <h4>Get your CSP Programme Book</h4>
-        <p>Enter Registration No and Email ID. During testing, the Programme Book PDF will be generated and emailed only to IQAC for verification.</p>
+        <p>Enter Registration No and Email ID. The Programme Book PDF will be generated and emailed to the verified registered student email.</p>
         <button type="button" class="card-button" onclick="openProgrammeBookModal()">
-          Generate Test Copy
+          Get Programme Book
           <svg aria-hidden="true"><use href="#icon-arrow"></use></svg>
         </button>
       </article>
@@ -1091,7 +1091,7 @@
     </section>
 
     <section class="notice">
-      <strong>Important:</strong> This dashboard is open to students and mentors. The Project Work Submission Form is protected by Phase 1 and Phase 2 completion verification. During Version 6A testing, the CSP Programme Book option sends the generated PDF only to IQAC for verification.
+      <strong>Important:</strong> This dashboard is open to students and mentors. The Project Work Submission Form is protected by Phase 1 and Phase 2 completion verification. The CSP Programme Book option sends the generated PDF to the verified registered student email.
     </section>
   </main>
 
@@ -1132,7 +1132,7 @@
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="programmeBookTitle">
       <div class="modal-head">
         <h3 id="programmeBookTitle">Get your CSP Programme Book</h3>
-        <p>Enter Registration No and Email ID. In Version 6A testing, the generated Programme Book will be emailed only to IQAC.</p>
+        <p>Enter Registration No and Email ID. The generated Programme Book will be emailed to your verified registered email.</p>
       </div>
 
       <div class="modal-body">
@@ -1150,7 +1150,7 @@
 
         <div class="modal-actions">
           <button type="button" class="btn-secondary" onclick="closeProgrammeBookModal()">Close</button>
-          <button type="button" class="btn-primary" id="programmeBookButton" onclick="requestProgrammeBookTestCopy()">Generate Test Copy</button>
+          <button type="button" class="btn-primary" id="programmeBookButton" onclick="requestProgrammeBookForStudent()">Get Programme Book</button>
         </div>
       </div>
     </div>
@@ -1307,7 +1307,7 @@
       const button = document.getElementById("programmeBookButton");
       if (button) {
         button.disabled = false;
-        button.textContent = "Generate Test Copy";
+        button.textContent = "Get Programme Book";
       }
 
       setTimeout(function() { document.getElementById("programmeBookRegNo").focus(); }, 80);
@@ -1320,7 +1320,7 @@
       const button = document.getElementById("programmeBookButton");
       if (button) {
         button.disabled = false;
-        button.textContent = "Generate Test Copy";
+        button.textContent = "Get Programme Book";
       }
     }
 
@@ -1328,7 +1328,7 @@
       if (event.target.id === "programmeBookModal") closeProgrammeBookModal();
     }
 
-    function requestProgrammeBookTestCopy() {
+    function requestProgrammeBookForStudent() {
       const reg = document.getElementById("programmeBookRegNo").value.trim();
       const email = document.getElementById("programmeBookEmailId").value.trim().toLowerCase();
       const button = document.getElementById("programmeBookButton");
@@ -1353,19 +1353,19 @@
 
       button.disabled = true;
       button.textContent = "Generating...";
-      showProgrammeBookModalMessage("Verifying all CSP phases and generating the Programme Book. Please wait. This may take a little time.", "info");
+      showProgrammeBookModalMessage("Verifying all CSP phases, generating the Programme Book, and sending it to your registered email. Please wait. This may take a little time.", "info");
 
       callProgrammeBookJsonp(
-        "generateProgrammeBookTest",
+        "generateProgrammeBookForStudent",
         { reg: reg, email: email },
         function(response) {
           if (response && response.success) {
             showProgrammeBookModalMessage(
               response.message ||
-              ("Congratulations, Dear " + (response.studentName || "Student") + ", your Community Service Programme Book has been successfully generated. A test copy has been sent to IQAC for verification."),
+              ("Congratulations, Dear " + (response.studentName || "Student") + ", your Community Service Programme Book has been successfully generated. A Programme Book has been sent to your registered email."),
               "success"
             );
-            button.textContent = "Test Copy Sent to IQAC";
+            button.textContent = "Programme Book Sent";
             return;
           }
 
@@ -1374,12 +1374,12 @@
             "error"
           );
           button.disabled = false;
-          button.textContent = "Generate Test Copy";
+          button.textContent = "Get Programme Book";
         },
         function(errorMessage) {
           showProgrammeBookModalMessage(errorMessage || "Request failed. Please try again.", "error");
           button.disabled = false;
-          button.textContent = "Generate Test Copy";
+          button.textContent = "Get Programme Book";
         }
       );
     }
