@@ -568,6 +568,12 @@
       border: 1px solid #bfdbfe;
     }
 
+    .modal-message.success {
+      background: #ecfdf5;
+      color: #047857;
+      border: 1px solid #a7f3d0;
+    }
+
     .modal-message.warning {
       background: #fffbeb;
       color: #92400e;
@@ -981,7 +987,7 @@
       <div>
         <h3>Dashboard Quick Access</h3>
         <p>
-          Select the required Phase 3 service. The Project Work form verifies Phase 1 and Phase 2 completion before opening.
+          Select the required Phase 3 service. The Project Work form verifies Phase 1 and Phase 2 completion before opening. During testing, the Programme Book request sends a test copy only to IQAC.
         </p>
       </div>
 
@@ -1014,6 +1020,19 @@
         <p>Verify Registration No and Email ID. The form opens only after Phase 1 and Phase 2 completion checks are passed.</p>
         <button type="button" class="card-button" onclick="openProjectFormVerificationModal()">
           Open Form
+          <svg aria-hidden="true"><use href="#icon-arrow"></use></svg>
+        </button>
+      </article>
+
+      <article class="dashboard-card card-purple">
+        <div class="card-top">
+          <span class="icon-box" aria-hidden="true"><svg><use href="#icon-file"></use></svg></span>
+          <span class="badge">Test</span>
+        </div>
+        <h4>Get your CSP Programme Book</h4>
+        <p>Enter Registration No and Email ID. During testing, the Programme Book PDF will be generated and emailed only to IQAC for verification.</p>
+        <button type="button" class="card-button" onclick="openProgrammeBookModal()">
+          Generate Test Copy
           <svg aria-hidden="true"><use href="#icon-arrow"></use></svg>
         </button>
       </article>
@@ -1072,7 +1091,7 @@
     </section>
 
     <section class="notice">
-      <strong>Important:</strong> This dashboard is open to students and mentors. The Project Work Submission Form is protected by Phase 1 and Phase 2 completion verification. Topic-wise analysis uses all submitted responses under the selected Suggested Project Topic.
+      <strong>Important:</strong> This dashboard is open to students and mentors. The Project Work Submission Form is protected by Phase 1 and Phase 2 completion verification. During Version 6A testing, the CSP Programme Book option sends the generated PDF only to IQAC for verification.
     </section>
   </main>
 
@@ -1109,8 +1128,37 @@
     </div>
   </div>
 
+  <div class="modal-overlay" id="programmeBookModal" onclick="closeProgrammeBookModalOutside(event)">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="programmeBookTitle">
+      <div class="modal-head">
+        <h3 id="programmeBookTitle">Get your CSP Programme Book</h3>
+        <p>Enter Registration No and Email ID. In Version 6A testing, the generated Programme Book will be emailed only to IQAC.</p>
+      </div>
+
+      <div class="modal-body">
+        <div class="field">
+          <label for="programmeBookRegNo">Registration No</label>
+          <input id="programmeBookRegNo" type="text" inputmode="numeric" maxlength="12" placeholder="Enter 12 digit Registration No" autocomplete="off">
+        </div>
+
+        <div class="field">
+          <label for="programmeBookEmailId">Email ID</label>
+          <input id="programmeBookEmailId" type="email" placeholder="Enter registered Email ID" autocomplete="email">
+        </div>
+
+        <div class="modal-message" id="programmeBookModalMessage"></div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" onclick="closeProgrammeBookModal()">Close</button>
+          <button type="button" class="btn-primary" id="programmeBookButton" onclick="requestProgrammeBookTestCopy()">Generate Test Copy</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
     const APPS_SCRIPT_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxNwgV32Af4QRLXStQT_RPDt99bEzMyABRHAJM_gxRs_iYYOezxV1BNiMeYLTQ8N05qTQ/exec";
+    const PROGRAMME_BOOK_WEB_APP_URL = "PASTE_PROGRAMME_BOOK_WEB_APP_URL_HERE";
 
     const PROJECT_DASHBOARD_CONTEXT = {
       reg: "",
@@ -1234,8 +1282,166 @@
       window.location.assign(buildAppsScriptUrl("mentorwiseProjectWorkStatusReport"));
     }
 
+    function isProgrammeBookUrlConfigured() {
+      return (
+        PROGRAMME_BOOK_WEB_APP_URL &&
+        PROGRAMME_BOOK_WEB_APP_URL !== "PASTE_PROGRAMME_BOOK_WEB_APP_URL_HERE" &&
+        /^https:\/\/script\.google\.com\/macros\/s\/.+\/exec$/.test(PROGRAMME_BOOK_WEB_APP_URL)
+      );
+    }
+
+    function showProgrammeBookModalMessage(text, type) {
+      const box = document.getElementById("programmeBookModalMessage");
+      box.textContent = text;
+      box.className = "modal-message show " + (type || "warning");
+    }
+
+    function openProgrammeBookModal() {
+      document.body.classList.add("modal-open");
+      document.getElementById("programmeBookModalMessage").className = "modal-message";
+      document.getElementById("programmeBookModalMessage").textContent = "";
+      document.getElementById("programmeBookRegNo").value = "";
+      document.getElementById("programmeBookEmailId").value = "";
+      document.getElementById("programmeBookModal").classList.add("active");
+
+      const button = document.getElementById("programmeBookButton");
+      if (button) {
+        button.disabled = false;
+        button.textContent = "Generate Test Copy";
+      }
+
+      setTimeout(function() { document.getElementById("programmeBookRegNo").focus(); }, 80);
+    }
+
+    function closeProgrammeBookModal() {
+      document.body.classList.remove("modal-open");
+      document.getElementById("programmeBookModal").classList.remove("active");
+
+      const button = document.getElementById("programmeBookButton");
+      if (button) {
+        button.disabled = false;
+        button.textContent = "Generate Test Copy";
+      }
+    }
+
+    function closeProgrammeBookModalOutside(event) {
+      if (event.target.id === "programmeBookModal") closeProgrammeBookModal();
+    }
+
+    function requestProgrammeBookTestCopy() {
+      const reg = document.getElementById("programmeBookRegNo").value.trim();
+      const email = document.getElementById("programmeBookEmailId").value.trim().toLowerCase();
+      const button = document.getElementById("programmeBookButton");
+
+      if (!/^\d{12}$/.test(reg)) {
+        showProgrammeBookModalMessage("Please enter a valid 12 digit Registration No.", "warning");
+        return;
+      }
+
+      if (!/^\S+@\S+\.\S+$/.test(email)) {
+        showProgrammeBookModalMessage("Please enter a valid Email ID.", "warning");
+        return;
+      }
+
+      if (!isProgrammeBookUrlConfigured()) {
+        showProgrammeBookModalMessage(
+          "Programme Book Web App URL is not configured yet. Deploy the Programme Book Apps Script as a Web App and paste the URL in PROGRAMME_BOOK_WEB_APP_URL.",
+          "error"
+        );
+        return;
+      }
+
+      button.disabled = true;
+      button.textContent = "Generating...";
+      showProgrammeBookModalMessage("Verifying all CSP phases and generating the Programme Book. Please wait. This may take a little time.", "info");
+
+      callProgrammeBookJsonp(
+        "generateProgrammeBookTest",
+        { reg: reg, email: email },
+        function(response) {
+          if (response && response.success) {
+            showProgrammeBookModalMessage(
+              response.message ||
+              ("Congratulations, Dear " + (response.studentName || "Student") + ", your Community Service Programme Book has been successfully generated. A test copy has been sent to IQAC for verification."),
+              "success"
+            );
+            button.textContent = "Test Copy Sent to IQAC";
+            return;
+          }
+
+          showProgrammeBookModalMessage(
+            response && response.message ? response.message : "Unable to generate Programme Book. Please try again.",
+            "error"
+          );
+          button.disabled = false;
+          button.textContent = "Generate Test Copy";
+        },
+        function(errorMessage) {
+          showProgrammeBookModalMessage(errorMessage || "Request failed. Please try again.", "error");
+          button.disabled = false;
+          button.textContent = "Generate Test Copy";
+        }
+      );
+    }
+
+    function callProgrammeBookJsonp(action, params, onSuccess, onError) {
+      const callbackName =
+        "programmeBookCallback_" +
+        Date.now() +
+        "_" +
+        Math.random().toString(36).slice(2);
+
+      let timeoutId;
+      let script;
+
+      function cleanup() {
+        if (timeoutId) clearTimeout(timeoutId);
+        if (script && script.parentNode) script.parentNode.removeChild(script);
+        try { delete window[callbackName]; } catch (err) { window[callbackName] = undefined; }
+      }
+
+      window[callbackName] = function(response) {
+        cleanup();
+        onSuccess(response || {});
+      };
+
+      try {
+        const url = new URL(PROGRAMME_BOOK_WEB_APP_URL);
+        url.searchParams.set("action", action);
+        url.searchParams.set("callback", callbackName);
+
+        Object.keys(params || {}).forEach(function(key) {
+          const value = params[key];
+          if (value !== undefined && value !== null && String(value).trim() !== "") {
+            url.searchParams.set(key, String(value).trim());
+          }
+        });
+
+        script = document.createElement("script");
+        script.src = url.toString();
+        script.async = true;
+        script.onerror = function() {
+          cleanup();
+          onError("Unable to connect to Programme Book Web App. Please check the deployment URL.");
+        };
+
+        timeoutId = setTimeout(function() {
+          cleanup();
+          onError("Programme Book generation is taking too long. Please check Apps Script execution logs or try again.");
+        }, 180000);
+
+        document.body.appendChild(script);
+      } catch (err) {
+        cleanup();
+        onError("Programme Book Web App URL is invalid.");
+      }
+    }
+
     document.addEventListener("keydown", function(event) {
-      if (event.key === "Escape") closeProjectFormVerificationModal();
+      if (event.key === "Escape") {
+        closeProjectFormVerificationModal();
+        closeProgrammeBookModal();
+      }
     });
 
     function escapeHtml(value) {
