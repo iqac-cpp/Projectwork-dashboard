@@ -1030,7 +1030,7 @@
           <span class="badge">Student Copy</span>
         </div>
         <h4>Get your CSP Programme Book</h4>
-        <p>Enter Registration No and Email ID. The Programme Book PDF will be generated and emailed to the verified registered student email.</p>
+        <p>Enter Registration No and Email ID. The Programme Book PDF will be generated and emailed to the verified registered student email. Duplicate requests are automatically prevented.</p>
         <button type="button" class="card-button" onclick="openProgrammeBookModal()">
           Get Programme Book
           <svg aria-hidden="true"><use href="#icon-arrow"></use></svg>
@@ -1091,7 +1091,7 @@
     </section>
 
     <section class="notice">
-      <strong>Important:</strong> This dashboard is open to students and mentors. The Project Work Submission Form is protected by Phase 1 and Phase 2 completion verification. The CSP Programme Book option sends the generated PDF to the verified registered student email.
+      <strong>Important:</strong> This dashboard is open to students and mentors. The Project Work Submission Form is protected by Phase 1 and Phase 2 completion verification. During student delivery, the CSP Programme Book option sends the generated PDF only to IQAC for verification.
     </section>
   </main>
 
@@ -1132,7 +1132,7 @@
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="programmeBookTitle">
       <div class="modal-head">
         <h3 id="programmeBookTitle">Get your CSP Programme Book</h3>
-        <p>Enter Registration No and Email ID. The generated Programme Book will be emailed to your verified registered email.</p>
+        <p>Enter Registration No and Email ID. In student delivery, the generated Programme Book will be emailed only to IQAC.</p>
       </div>
 
       <div class="modal-body">
@@ -1158,7 +1158,7 @@
 
   <script>
     const APPS_SCRIPT_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxNwgV32Af4QRLXStQT_RPDt99bEzMyABRHAJM_gxRs_iYYOezxV1BNiMeYLTQ8N05qTQ/exec";
-    const PROGRAMME_BOOK_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwpyD2bqiJRCYVZrpqrCocQ1Mu8PlpAQ94pz1p-MSP8VuzbqJi4JOP8rdxCh36UEUb-/exec";
+    const PROGRAMME_BOOK_WEB_APP_URL = "PASTE_PROGRAMME_BOOK_WEB_APP_URL_HERE";
 
     const PROJECT_DASHBOARD_CONTEXT = {
       reg: "",
@@ -1362,10 +1362,20 @@
           if (response && response.success) {
             showProgrammeBookModalMessage(
               response.message ||
-              ("Congratulations, Dear " + (response.studentName || "Student") + ", your Community Service Programme Book has been successfully generated. A Programme Book has been sent to your registered email."),
+              ("Congratulations, Dear " + (response.studentName || "Student") + ", your Community Service Programme Book has been successfully sent to your registered email. Check your email."),
               "success"
             );
             button.textContent = "Programme Book Sent";
+            return;
+          }
+
+          if (response && response.alreadySent) {
+            showProgrammeBookModalMessage(
+              response.message ||
+              ("Dear " + (response.studentName || "Student") + ", your Community Service Programme Book has already been sent to your registered email ID. Please check your email."),
+              "warning"
+            );
+            button.textContent = "Already Sent";
             return;
           }
 
